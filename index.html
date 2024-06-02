@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HD Photo Filter</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <input type="file" id="uploadButton" multiple onchange="resizePhotos()" style="display: none;">
+        <button id="upload-button" onclick="document.getElementById('uploadButton').click()">Upload Photos</button>
+        <button id="resolution-button" onclick="adjustResolution()">Adjust Resolution</button>
+        <div class="counts">
+            <button id="count1">0 small photos</button>
+            <button id="count2">0 large photos</button>
+            <button id="count-default">0 default resolution photos</button>
+        </div>
+        <div class="download-buttons">
+            <button id="downloadButton1" onclick="downloadImages('small')">Download Small Photos</button>
+            <button id="downloadButton2" onclick="downloadImages('large')">Download Large Photos</button>
+            <button id="downloadButtonDefault" onclick="downloadImages('default')">Download Default Resolution Photos</button>
+        </div>
+    </div>
+    <script src="hdphotofilterScript.js"></script>
+</body>
+</html>
