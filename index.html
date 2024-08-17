@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HD Photo Filter</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            background-color: #FFFFFF;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #F5F5F5;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px;
+            max-width: 600px;
+            width: 90%;
+        }
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .upload-area.drag-over {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: #2980b9;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        button:active {
+            transform: scale(0.96);
+            background-color: #2980b9;
+        }
+        .counts {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .count {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            padding: 10px;
+            flex: 1;
+            margin: 0 5px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #progressBar {
+            width: 100%;
+            height: 4px;
+            background-color: #E0E0E0;
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        #progressBar .fill {
+            height: 100%;
+            width: 0;
+            background-color: #3498db;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="upload-area" id="uploadArea">
+            <p>Drag and drop photos here or click to select</p>
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+        <div id="progressBar" style="display: none;">
+            <div class="fill"></div>
+        </div>
+        <div class="counts">
+            <div class="count" id="smallCount">0 small photos</div>
+            <div class="count" id="largeCount">0 large photos</div>
+            <div class="count" id="defaultCount">0 default photos</div>
+        </div>
+        <button id="downloadSmall">Download Small Photos</button>
+        <button id="downloadLarge">Download Large Photos</button>
+        <button id="downloadDefault">Download Default Photos</button>
+        <button id="adjustResolution">Adjust Resolution</button>
+    </div>
+
+    <script>
+        let smallImages = [];
+        let largeImages = [];
+        let defaultResolutionImages = [];
+        let minResolutionWidth = 1024;
+        let minResolutionHeight = 1024;
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = progressBar.querySelector('.fill');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            smallImages = [];
+            largeImages = [];
+            defaultResolutionImages = [];
+
+            progressBar.style.display = 'block';
+            let processedFiles = 0;
+
+            for (let file of files) {
+                let img = new Image();
+                img.onload = function() {
+                    URL.revokeObjectURL(this.src);
+                    if (this.width < minResolutionWidth || this.height < minResolutionHeight) {
+                        smallImages.push(file);
+                    } else if (this.width === minResolutionWidth && this.height === minResolutionHeight) {
+                        defaultResolutionImages.push(file);
+                    } else {
+                        largeImages.push(file);
+                    }
+
+                    processedFiles++;
+                    progressFill.style.width = `${(processedFiles / files.length) * 100}%`;
+
+                    if (processedFiles === files.length) {
+                        updateCounts();
+                        setTimeout(() => {
+                            progressBar.style.display = 'none';
+                            progressFill.style.width = '0';
+                        }, 500);
+                    }
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        }
+
+        function updateCounts() {
+            document.getElementById('smallCount').textContent = `${smallImages.length} small photos`;
+            document.getElementById('largeCount').textContent = `${largeImages.length} large photos`;
+            document.getElementById('defaultCount').textContent = `${defaultResolutionImages.length} default photos`;
+        }
+
+        function downloadImages(images) {
+            images.forEach((file, index) => {
+                let a = document.createElement('a');
+                a.href = URL.createObjectURL(file);
+                a.download = `image${index + 1}.${file.name.split('.').pop()}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
+        }
+
+        document.getElementById('downloadSmall').addEventListener('click', () => downloadImages(smallImages));
+        document.getElementById('downloadLarge').addEventListener('click', () => downloadImages(largeImages));
+        document.getElementById('downloadDefault').addEventListener('click', () => downloadImages(defaultResolutionImages));
+
+        document.getElementById('adjustResolution').addEventListener('click', () => {
+            let newResolution = prompt("Enter the minimum resolution for large photos (width x height):", `${minResolutionWidth}x${minResolutionHeight}`);
+            if (newResolution) {
+                let [width, height] = newResolution.split('x').map(Number);
+                if (!isNaN(width) && !isNaN(height)) {
+                    minResolutionWidth = width;
+                    minResolutionHeight = height;
+                    handleFiles([...smallImages, ...largeImages, ...defaultResolutionImages]);
+                } else {
+                    alert("Invalid format. Please enter in the format widthxheight, e.g., 1024x1024.");
+                }
+            }
+        });
+
+        // Haptic feedback
+        if ('vibrate' in navigator) {
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', () => navigator.vibrate(10));
+            });
+        }
+    </script>
+</body>
+</html>
