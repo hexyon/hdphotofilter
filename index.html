@@ -81,6 +81,29 @@
             background-color: #3498db;
             transition: width 0.3s ease;
         }
+        .resolution-info {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .resolution-category {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #F8F9FA;
+        }
+        .resolution-category h3 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .resolution-category p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +112,23 @@
             <p>Drag and drop photos here or click to select</p>
         </div>
         <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+        
+        <div class="resolution-info">
+            <h2 style="margin-top: 0; color: #2c3e50;">Resolution Categories</h2>
+            <div class="resolution-category">
+                <h3>Small Photos</h3>
+                <p>Images smaller than <span id="minResolutionDisplay">1024x1024</span> pixels</p>
+            </div>
+            <div class="resolution-category">
+                <h3>Large Photos</h3>
+                <p>Images larger than <span id="largeResolutionDisplay">1024x1024</span> pixels</p>
+            </div>
+            <div class="resolution-category">
+                <h3>Default Photos</h3>
+                <p>Images exactly <span id="defaultResolutionDisplay">1024x1024</span> pixels</p>
+            </div>
+        </div>
+
         <div id="progressBar" style="display: none;">
             <div class="fill"></div>
         </div>
@@ -114,6 +154,13 @@
         const fileInput = document.getElementById('fileInput');
         const progressBar = document.getElementById('progressBar');
         const progressFill = progressBar.querySelector('.fill');
+
+        function updateResolutionDisplay() {
+            const resolution = `${minResolutionWidth}x${minResolutionHeight}`;
+            document.getElementById('minResolutionDisplay').textContent = resolution;
+            document.getElementById('defaultResolutionDisplay').textContent = resolution;
+            document.getElementById('largeResolutionDisplay').textContent = resolution;
+        }
 
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -202,12 +249,16 @@
                 if (!isNaN(width) && !isNaN(height)) {
                     minResolutionWidth = width;
                     minResolutionHeight = height;
+                    updateResolutionDisplay();
                     handleFiles([...smallImages, ...largeImages, ...defaultResolutionImages]);
                 } else {
                     alert("Invalid format. Please enter in the format widthxheight, e.g., 1024x1024.");
                 }
             }
         });
+
+        // Initialize resolution display
+        updateResolutionDisplay();
 
         // Haptic feedback
         if ('vibrate' in navigator) {
