@@ -226,17 +226,21 @@
             document.getElementById('defaultCount').textContent = `${defaultResolutionImages.length} default photos`;
         }
 
-        function downloadImages(images) {
-            images.forEach((file, index) => {
-                let a = document.createElement('a');
-                a.href = URL.createObjectURL(file);
-                a.download = `image${index + 1}.${file.name.split('.').pop()}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
-            });
-        }
+
+    function downloadImages(images) {
+        images.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const link = document.createElement('a');
+                link.href = e.target.result;
+                link.download = `image${index + 1}.${file.name.split('.').pop()}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
         document.getElementById('downloadSmall').addEventListener('click', () => downloadImages(smallImages));
         document.getElementById('downloadLarge').addEventListener('click', () => downloadImages(largeImages));
